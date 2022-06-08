@@ -3,17 +3,19 @@
 import random
 import numpy as np
 import pandas as pd
+import time
 
 
 #we will be using scikit learn for machine learning
 
 #our function that will add noise to the data
-def createNoise(population):
+def createNoise(population, noise):
+    noise = noise/100
     for i in range(1, len(population)):
         for j in range(population[i]):
             rand = random.randint(1,100)
             rand = rand / 100
-            if(rand < 0.1):
+            if(rand < noise):
                 if(population[i] == 0):
                     population[i] = 1
                 elif(population[i] == 1):
@@ -56,8 +58,9 @@ df['J'] = J
 #Store the number of columns in the dataframe for later use
 num_cols = len(df.columns)
 
-#Ask the user for the nuumber of noisy samples they want to generate
-n = int(input("How many samples? (integers > 1 only) "))
+#prompt the user for sample number and noise factor
+n = int(input("How many samples do you want to generate? "))
+noise = float(input("What is the noise factor (in percent)? "))
 
 #Create n - 1 copies of each column in the dataframe and store it as a new dataframe
 df_noisy = df.copy()
@@ -74,7 +77,7 @@ df_noisy = df_noisy.drop(df_noisy.columns[0:10], axis=1)
 
 #iterate over each column in the dataframe and add noise to each column
 for col in df_noisy.columns:
-    createNoise(df_noisy[col])
+    createNoise(df_noisy[col], noise)
 
 # for i in range(len(df_noisy_list)):
 #     #add noise to the dataframe
@@ -90,13 +93,16 @@ df_combined.to_csv('cs457-final.csv', index=False)
 #create a new dataframe the csv file. This will give us a dataframe that isnt fragmented
 dataset = pd.read_csv('cs457-final.csv')
 
+# (dataset)
 
 samples = []
 for col in dataset.columns:
     samples.append(dataset[col])
 
+
 #turn X into a numpy array
 samples = np.array(samples).T
+
 
 #we will now build the array of targets
 targets = df.copy()
@@ -105,68 +111,111 @@ for i in range(n-1):
     #append temp to targets
     targets = pd.concat([targets, temp], axis=1)
 
+# print("Target\n\n" + str(targets))
+
 #convert targets to a numpy array
 targets = np.array(targets)
 
 from sklearn.model_selection import train_test_split
 samples_train, samples_test, targets_train, targets_test = train_test_split(samples, targets, test_size=0.40, random_state=1)
 
+
+
+print("Beginning MLP Classification...\n")
 from sklearn.neural_network import MLPClassifier
-mlp_model = MLPClassifier(solver='lbfgs', alpha=1e-5, random_state=1, learning_rate='adaptive', learning_rate_init=0.01)
-
+time_start = time.perf_counter()
+mlp_model = MLPClassifier(solver='lbfgs', alpha=1e-5, random_state=1, learning_rate_init=0.01)
 mlp_model.fit(samples_train, targets_train)
+time_end = time.perf_counter()
 
-print("MLP Model Results\nThe average accuracy of MLP classification with N_SAMPLES=" + str(n) + " is: " + str(mlp_model.score(samples_test, targets_test)) + "\n\n")
+print("MLP Model Results\nThe average accuracy of MLP classification with N_SAMPLES=" + str(n) + " and noise = " + str(noise) +  "% is: " + str(100*mlp_model.score(samples_test, targets_test)) + "%.\nTraining completed in " + str(time_end - time_start) + " seconds.\n")
 
+
+#optional part: optimizing the hyperparameters for random forest
+# we used this to find the best parameters for the random forest model
+# on line 143.
+# from sklearn.experimental import enable_halving_search_cv  # noqa
+# from sklearn.model_selection import HalvingGridSearchCV
+# import pandas as pd
+
+# param_grid = {'max_depth': [3, 5, 10],
+#               'min_samples_split': [2, 5, 10]}
+# base_estimator = RandomForestClassifier(random_state=0)
+# sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
+#                          factor=2, resource='n_estimators',
+#                          max_resources=30).fit(samples_train, targets_train)
+# print(sh.best_estimator_)
+
+print("Beginning Random Forest Classification...\n")
 from sklearn.ensemble import RandomForestClassifier
-rf_model = RandomForestClassifier()
+time_start = time.perf_counter()
+rf_model = RandomForestClassifier(n_estimators=24, random_state=0, max_depth=5)
 rf_model.fit(samples_train, targets_train)
+time_end = time.perf_counter()
 
-print("Random Forest Model Results\nThe average accuracy of Random Forest classification with N_SAMPLES=" + str(n) + " is: " + str(rf_model.score(samples_test, targets_test)) + "\n""\n")
+print("Random Forest Model Results\nThe average accuracy of Random Forest classification with N_SAMPLES=" + str(n) + " and noise = " + str(noise) +  "% is: " + str(100*rf_model.score(samples_test, targets_test)) + "%.\nTraining completed in " + str(time_end - time_start) + " seconds.\n")
 
+print("Beginning KNeighbors Classification...\n")
 from sklearn.neighbors import KNeighborsClassifier
-knn_model = KNeighborsClassifier(n_neighbors=10)
+time_start = time.perf_counter()
+knn_model = KNeighborsClassifier()
 knn_model.fit(samples_train, targets_train)
+time_end = time.perf_counter()
 
-print("K-nearest neighbors model results\nThe average accuracy of KNN classification with N_SAMPLES=" + str(n) + " is: " + str(knn_model.score(samples_test, targets_test)) + "\n\n")
-
-
-# from sklearn import svm
-# svm_model = svm.SVC(kernel='linear', C=.1, gamma=1)
-# svm_model.fit(samples_train, targets_train)
+print("K-nearest neighbors model results\nThe average accuracy of KNN classification with N_SAMPLES=" + str(n) + " and noise = " + str(noise) +  "% is: " + str(100*knn_model.score(samples_test, targets_test)) + "%.\nTraining completed in " + str(time_end - time_start) + " seconds.\n")
 
 
-# print("SVM model results\nThe average accuracy of SVM classification with N_SAMPLES=" + str(n) + " is: " + str(svm_model.score(samples_test, targets_test)) + "\n\n")
+#Make an array that contains 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'
+#n times
 
-test1 = np.array(A)
-test2 = np.array(B)
-test3 = np.array(C)
-test4 = np.array(D)
-test5 = np.array(E)
-test6 = np.array(F)
-test7 = np.array(G)
-test8 = np.array(H)
-test9 = np.array(I)
-test10 = np.array(J)
+svm_target_array = []
+for i in range(n*10):
+    #every 10th element is the letter 'A'
+    if i % 10 == 0:
+        svm_target_array.append('A')
+    #every 11th element is the letter 'B'
+    elif i % 10 == 1:
+        svm_target_array.append('B')
+    #every 12th element is the letter 'C'
+    elif i % 10 == 2:
+        svm_target_array.append('C')
+    #every 13th element is the letter 'D'
+    elif i % 10 == 3:
+        svm_target_array.append('D')
+    #every 14th element is the letter 'E'
+    elif i % 10 == 4:
+        svm_target_array.append('E')
+    #every 15th element is the letter 'F'
+    elif i % 10 == 5:
+        svm_target_array.append('F')
+    #every 16th element is the letter 'G'
+    elif i % 10 == 6:
+        svm_target_array.append('G')
+    #every 17th element is the letter 'H'
+    elif i % 10 == 7:
+        svm_target_array.append('H')
+    #every 18th element is the letter 'I'
+    elif i % 10 == 8:
+        svm_target_array.append('I')
+    #every 19th element is the letter 'J'
+    elif i % 10 == 9:
+        svm_target_array.append('J')
+    
+    
 
-#get the eigenvectors and eigenvalues from the covariance matrix
-eigenvalues, eigenvectors = np.linalg.eig(np.cov(samples_train))
-
-print(eigenvalues)
-print(eigenvectors)
+samples_train, samples_test, svm_targets_train, svm_targets_test = train_test_split(samples.T, svm_target_array, test_size=0.40, random_state=1)
 
 
+#use svm to classify the data
+print("Beginning SVM classification...\n")
+from sklearn.svm import SVC
+time_start = time.perf_counter()
+svm_model = SVC()
+svm_model.fit(samples_train, svm_targets_train)
+time_end = time.perf_counter()
 
-print("The dot product of A and A transposed is: " + str(np.dot(test1, test1.T)))
-print("The dot product of B and B transposed is: " + str(np.dot(test2, test2.T)))
-print("The dot product of C and C transposed is: " + str(np.dot(test3, test3.T)))
-print("The dot product of D and D transposed is: " + str(np.dot(test4, test4.T)))
-print("The dot product of E and E transposed is: " + str(np.dot(test5, test5.T)))
-print("The dot product of F and F transposed is: " + str(np.dot(test6, test6.T)))
-print("The dot product of G and G transposed is: " + str(np.dot(test7, test7.T)))
-print("The dot product of H and H transposed is: " + str(np.dot(test8, test8.T)))
-print("The dot product of I and I transposed is: " + str(np.dot(test9, test9.T)))
-print("The dot product of J and J transposed is: " + str(np.dot(test10, test10.T)))
+print("SVM Model Results\nThe average accuracy of SVM classification with N_SAMPLES=" + str(n) + " and noise = " + str(noise) +  "% is: " + str(100*svm_model.score(samples_test, svm_targets_test)) + "%.\nTraining completed in " + str(time_end - time_start) + " seconds.\n")
+
 
 
 # %%
