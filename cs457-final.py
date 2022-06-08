@@ -218,6 +218,57 @@ print("SVM Model Results\nThe average accuracy of SVM classification with N_SAMP
 
 
 
+
 # %%
+#Now we will create some bar graphs comparing the accuracy of the different classifiers
+import matplotlib.pyplot as plt
+
+#create a bar graph that compares categories
+categories = ['n = 5, noise = 10%', 'n = 5, noise = 15%', 'n = 5, noise = 25%', 'n = 15, noise = 10%', 'n = 15, noise = 15%', 'n = 15, noise = 25%', 'n = 45, noise = 10%', 'n = 45, noise = 15%', 'n = 45, noise = 25%']
+
+mlp_scores = [35.0, 40, 40.0, 20.0, 20.0, 20.0, 25.0, 15.0, 25.0]
+rf_scores = [30.0, 35.0, 25.0, 35.0, 25.0, 25.0, 35.0, 40.0, 25.0]
+knn_scores = [20.0, 35.0, 20.0, 35.0, 30.0, 20.0, 25.0, 25.0, 25.0]
+svm_scores = [0, 0, 0, 3.33, 3.33, 5.0, 3.89, 2.77, 3.33]
+
+#plot mlp_scores scores vs categories
+plt.bar(categories, mlp_scores, color='b', align='center')
+plt.title('MLP Model Accuracy at Different N_SAMPLES and NOISE')
+plt.ylabel('Accuracy (%)')
+plt.xlabel('N_SAMPLES and NOISE')
+#make the x-axis labels readable
+plt.xticks(categories, rotation=90, fontsize=8, fontweight='bold')
+#shift the x-axis labels to the left
+plt.show()
+
+#now doing the same for rf_scores
+plt.bar(categories, rf_scores, color='r', align='center')
+plt.title('Random Forest Model Accuracy at Different N_SAMPLES and NOISE')
+plt.ylabel('Accuracy (%)')
+plt.xlabel('N_SAMPLES and NOISE')
+#make the x-axis labels readable
+plt.xticks(categories, rotation=90, fontsize=8, fontweight='bold')
+#shift the x-axis labels to the left
+plt.show()
+
+#now doing the same for knn_scores
+plt.bar(categories, knn_scores, color='g', align='center')
+plt.title('KNN Model Accuracy at Different N_SAMPLES and NOISE')
+plt.ylabel('Accuracy (%)')
+plt.xlabel('N_SAMPLES and NOISE')
+#make the x-axis labels readable
+plt.xticks(categories, rotation=90, fontsize=8, fontweight='bold')
+#shift the x-axis labels to the left
+plt.show()
+
+#now doing the same for svm_scores
+plt.bar(categories, svm_scores, color='y', align='center')
+plt.title('SVM Model Accuracy at Different N_SAMPLES and NOISE')
+plt.ylabel('Accuracy (%)')
+plt.xlabel('N_SAMPLES and NOISE')
+#make the x-axis labels readable
+plt.xticks(categories, rotation=90, fontsize=8, fontweight='bold')
+#shift the x-axis labels to the left
+plt.show()
 
 # %%
